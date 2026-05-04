@@ -1,742 +1,536 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
-// ─── Theme ───────────────────────────────────────────────────────────────────
-const T = {
-  light: {
-    bg: "#FAFAF8", surface: "#FFFFFF", sidebar: "#F0EFE9",
-    border: "#E5E3DB", text: "#1A1A1A", muted: "#6B7280",
-    input: "#FFFFFF", inputBorder: "#D1CFC5", hover: "#F5F4EF",
-    tag: "#F3F4F6", tagText: "#374151", navBg: "#FFFFFF",
-    sectionBg: "#F9F9F7", cardShadow: "0 1px 4px rgba(0,0,0,0.06)"
-  },
-  dark: {
-    bg: "#0F1117", surface: "#1A1D27", sidebar: "#13151E",
-    border: "#2A2D3A", text: "#F0F0F0", muted: "#8B8FA8",
-    input: "#1F2235", inputBorder: "#3A3D4E", hover: "#1F2235",
-    tag: "#252836", tagText: "#B0B3C6", navBg: "#13151E",
-    sectionBg: "#161820", cardShadow: "0 1px 4px rgba(0,0,0,0.3)"
-  }
+// ─── Goal Templates by Role ───────────────────────────────────────────────────
+const GOAL_TEMPLATES = {
+  frontend: [
+    { cat: "Code Quality",  goal: "Achieve ≥80% code review approval rate on first submission",              target: "80%",        metric: "% approvals" },
+    { cat: "Delivery",      goal: "Complete all assigned sprint tasks on time with <15% carry-forward",       target: "90% on-time",metric: "% on-time"   },
+    { cat: "Testing",       goal: "Maintain minimum 70% unit test coverage for all new code written",         target: "70%",        metric: "% coverage"  },
+    { cat: "Growth",        goal: "Complete at least 1 technical course or certification by March 2027",      target: "1 cert",     metric: "Certs done"  },
+  ],
+  fullstack: [
+    { cat: "Feature Delivery", goal: "Contribute to at least 2 complete end-to-end features by March 2027",  target: "2 features", metric: "Features shipped" },
+    { cat: "Code Quality",     goal: "Maintain ≥75% code review approval on frontend and backend submissions",target: "75%",        metric: "% approvals"    },
+    { cat: "Delivery",         goal: "Complete sprint tasks with less than 15% carry-forward rate",           target: "<15%",       metric: "% carry-forward" },
+    { cat: "Growth",           goal: "Complete 1 fullstack or cloud learning module by March 2027",           target: "1 module",   metric: "Modules done"    },
+  ],
+  intern: [
+    { cat: "Learning",    goal: "Complete all assigned learning tasks and onboarding modules on time",         target: "100%",       metric: "Tasks done"  },
+    { cat: "Delivery",    goal: "Deliver assigned tickets/tasks within agreed sprint timelines",               target: "85% on-time",metric: "% on-time"   },
+    { cat: "Code Quality",goal: "Receive satisfactory code review feedback with <3 major revision rounds",    target: "<3 revisions",metric: "Avg revisions" },
+    { cat: "Growth",      goal: "Build and present 1 personal project or technical demo by March 2027",       target: "1 demo",     metric: "Demos done"  },
+  ],
+  qa: [
+    { cat: "Bug Detection", goal: "Identify and log 90%+ critical bugs before production release",            target: "90%",        metric: "% bugs caught" },
+    { cat: "Coverage",      goal: "Write test cases covering 80%+ of all features in each sprint",            target: "80%",        metric: "% coverage"    },
+    { cat: "Documentation", goal: "Maintain up-to-date test plans and regression suites for all modules",     target: "100%",       metric: "% documented"  },
+    { cat: "Turnaround",    goal: "Complete full QA cycle within the agreed sprint testing window",            target: "100%",       metric: "% on-time"     },
+  ],
+  webdev: [
+    { cat: "Performance",  goal: "Achieve Google PageSpeed score of 85+ on all key landing pages",            target: "85+",        metric: "PageSpeed score" },
+    { cat: "Uptime",       goal: "Maintain website uptime of 99.5% or higher throughout the year",            target: "99.5%",      metric: "Uptime %"        },
+    { cat: "Delivery",     goal: "Complete standard web update requests within 2 business days",               target: "<2 days",    metric: "Avg turnaround"  },
+    { cat: "SEO",          goal: "Ensure all pages meet core technical SEO standards (meta, schema, sitemap)", target: "100%",       metric: "% compliant"     },
+  ],
+  shopify: [
+    { cat: "Store Speed",  goal: "Improve Shopify store speed/performance score by 15% from baseline",        target: "+15%",       metric: "Speed score"    },
+    { cat: "Delivery",     goal: "Ship all assigned Shopify tasks and fixes within the sprint timeline",       target: "90% on-time",metric: "% on-time"      },
+    { cat: "Bug Fixes",    goal: "Resolve all P1/P2 Shopify store bugs within 24 hours of reporting",         target: "<24hr",      metric: "Avg fix time"   },
+    { cat: "Growth",       goal: "Complete 1 Shopify Partner or developer certification by March 2027",        target: "1 cert",     metric: "Certs done"     },
+  ],
+  ecom_head: [
+    { cat: "Revenue",      goal: "Grow Gross Merchandise Value (GMV) by 20% year-over-year",                  target: "+20% YoY",   metric: "GMV growth"    },
+    { cat: "Conversion",   goal: "Increase store conversion rate by 15% from current baseline",               target: "+15%",       metric: "CVR %"         },
+    { cat: "Team",         goal: "Ensure 100% goal completion and review participation across the ecom team",  target: "100%",       metric: "% completion"  },
+    { cat: "Campaigns",    goal: "Plan and execute 12 ecommerce campaigns with per-campaign ROI tracking",     target: "12/year",    metric: "Campaigns done"},
+  ],
+  ecom_ops: [
+    { cat: "Listings",     goal: "Ensure 100% of active product listings are fully optimised at all times",   target: "100%",       metric: "% optimised"   },
+    { cat: "Campaigns",    goal: "Support execution of 8+ ecommerce campaigns with data tracking",            target: "8/year",     metric: "Campaigns"     },
+    { cat: "Reporting",    goal: "Submit weekly performance and ops reports without delay",                    target: "48 reports", metric: "Reports filed" },
+    { cat: "Growth",       goal: "Complete 1 ecommerce or platform certification by March 2027",              target: "1 cert",     metric: "Certs done"    },
+  ],
+  ops_manager: [
+    { cat: "Ops Delivery",   goal: "Ensure all site operations tasks are completed within agreed SLAs",        target: "95% SLA",    metric: "% within SLA" },
+    { cat: "Reporting",      goal: "Publish weekly ops health report with zero delays",                        target: "48 reports", metric: "Reports done"  },
+    { cat: "Process",        goal: "Identify and document 3+ process improvements by March 2027",             target: "3 SOPs",     metric: "SOPs created"  },
+    { cat: "Stakeholders",   goal: "Conduct monthly review with key stakeholders across teams",                target: "12/year",    metric: "Reviews held"  },
+  ],
+  apm: [
+    { cat: "Roadmap",        goal: "Maintain a reviewed, prioritised product backlog on a weekly basis",       target: "Weekly",     metric: "Backlog health"},
+    { cat: "Feature Delivery",goal:"Ensure 80% of planned features are shipped on time each quarter",          target: "80%",        metric: "% on-time"     },
+    { cat: "Stakeholders",   goal: "Conduct monthly product reviews with key stakeholders",                    target: "12/year",    metric: "Reviews held"  },
+    { cat: "User Research",  goal: "Collect structured user feedback for every major feature launched",        target: "100%",       metric: "% with research"},
+  ],
+  pm: [
+    { cat: "Product Strategy",goal:"Define and maintain a clear 6-month product roadmap updated quarterly",    target: "Quarterly",  metric: "Roadmap updated"},
+    { cat: "Delivery",        goal:"Achieve 85%+ on-time delivery of planned quarterly roadmap features",      target: "85%",        metric: "% on-time"     },
+    { cat: "Stakeholders",    goal:"Lead monthly product reviews with leadership and cross-functional teams",   target: "12/year",    metric: "Reviews held"  },
+    { cat: "OKRs",            goal:"Define measurable OKRs for product area and track monthly progress",       target: "100% tracked",metric:"% OKRs active" },
+  ],
+  data_analyst: [
+    { cat: "Reporting",    goal: "Deliver all weekly and monthly data reports on time without reminders",      target: "100% on-time",metric: "% on-time"   },
+    { cat: "Accuracy",     goal: "Maintain less than 2% error rate in all data outputs and dashboards",        target: "<2% errors", metric: "Error rate"    },
+    { cat: "Dashboards",   goal: "Build and maintain at least 3 live performance tracking dashboards",         target: "3",          metric: "Dashboards live"},
+    { cat: "Growth",       goal: "Complete 1 data analytics or BI tool certification by March 2027",           target: "1 cert",     metric: "Certs done"    },
+  ],
+  design: [
+    { cat: "Delivery",     goal: "Deliver 95% of all creative assets within agreed turnaround time",           target: "95%",        metric: "% on-time"     },
+    { cat: "Quality",      goal: "Achieve less than 5% revision rate on creative assets at first delivery",    target: "<5%",        metric: "Revision rate"  },
+    { cat: "Brand",        goal: "Ensure 100% of all outputs comply with brand guidelines",                    target: "100%",       metric: "% compliant"    },
+    { cat: "Volume",       goal: "Meet or exceed the agreed monthly creative asset output target",             target: "Per plan",   metric: "Assets/month"   },
+  ],
+  uiux: [
+    { cat: "Design Quality", goal: "Deliver design files with complete annotations; zero rework from devs",    target: "0 rework",   metric: "Rework instances"},
+    { cat: "Handoffs",       goal: "Hand off all designs at least 1 sprint before development begins",         target: "100%",       metric: "% early handoffs"},
+    { cat: "Usability",      goal: "Conduct at least 2 usability reviews per quarter on key user flows",       target: "8/year",     metric: "Reviews done"    },
+    { cat: "Growth",         goal: "Complete 1 UX/UI design course or certification by March 2027",            target: "1 cert",     metric: "Certs done"      },
+  ],
+  design_lead: [
+    { cat: "Design Strategy",goal: "Define and maintain design system standards used by the full team",        target: "System live",metric: "System usage %"  },
+    { cat: "Team Output",    goal: "Ensure team delivers 95%+ creative assets on time every month",            target: "95%",        metric: "% on-time"       },
+    { cat: "Brand Integrity",goal: "Zero brand guideline violations in any published creative output",         target: "0 violations",metric:"Violations"      },
+    { cat: "Stakeholders",   goal: "Conduct design reviews with product/marketing teams monthly",              target: "12/year",    metric: "Reviews held"    },
+  ],
+  marketing: [
+    { cat: "Lead Generation",goal: "Generate qualified MQLs per quarter aligned to sales targets",             target: "Per target", metric: "MQLs/quarter"   },
+    { cat: "Campaigns",      goal: "Plan and execute 8+ campaigns with documented ROI per campaign",           target: "8/year",     metric: "Campaigns run"  },
+    { cat: "Content",        goal: "Publish minimum 8 high-quality content pieces per month",                  target: "8/month",    metric: "Pieces/month"   },
+    { cat: "Reporting",      goal: "Submit monthly marketing performance report with channel-wise ROI",        target: "12/year",    metric: "Reports filed"  },
+  ],
+  crm: [
+    { cat: "CRM Health",   goal: "Maintain clean CRM database with <5% data quality issues",                   target: "<5% errors", metric: "Data quality %"},
+    { cat: "Campaigns",    goal: "Execute 12+ CRM/email campaigns with open rate >25% and CTR >3%",            target: "12/year",    metric: "Campaigns run"  },
+    { cat: "Analytics",    goal: "Deliver monthly CRM analytics report with actionable retention insights",     target: "12/year",    metric: "Reports filed"  },
+    { cat: "Automation",   goal: "Build and activate 3+ CRM automation workflows by March 2027",               target: "3 workflows",metric: "Flows live"     },
+  ],
+  hrbp: [
+    { cat: "Retention",    goal: "Reduce voluntary attrition by 10% vs prior year across assigned BUs",        target: "-10%",       metric: "Attrition %"   },
+    { cat: "PMS",          goal: "Ensure 100% goal-setting and review completion across all business units",   target: "100%",       metric: "% completion"  },
+    { cat: "Engagement",   goal: "Achieve 75%+ employee engagement score in bi-annual pulse surveys",          target: "75%+",       metric: "Engagement score"},
+    { cat: "Grievances",   goal: "Resolve all employee grievances within 10 working days of being raised",     target: "<10 days",   metric: "Avg resolution"},
+  ],
+  hr_manager: [
+    { cat: "Recruitment",  goal: "Achieve average time-to-fill of under 30 days for all open positions",       target: "<30 days",   metric: "Days to fill"  },
+    { cat: "Onboarding",   goal: "Achieve 90%+ satisfaction score on all new hire onboarding surveys",         target: "90%+",       metric: "Onboarding CSAT"},
+    { cat: "Compliance",   goal: "Ensure 100% HR compliance with labour laws and internal HR policies",        target: "100%",       metric: "Audit pass rate"},
+    { cat: "HR Ops",       goal: "Maintain zero payroll and documentation errors in monthly HR processing",    target: "0 errors",   metric: "Errors/month"  },
+  ],
+  web_analyst: [
+    { cat: "Reporting",    goal: "Submit all weekly web analytics reports on time without reminders",           target: "48/year",    metric: "Reports on-time"},
+    { cat: "Insights",     goal: "Deliver one actionable website insight or recommendation per month",          target: "12/year",    metric: "Insights filed" },
+    { cat: "Tracking",     goal: "Ensure 100% analytics event coverage across all key website pages",           target: "100%",       metric: "% events tracked"},
+    { cat: "Growth",       goal: "Complete 1 web analytics or GA4 certification by March 2027",                target: "1 cert",     metric: "Certs done"     },
+  ],
 };
 
-// ─── Roles & Goals Data ───────────────────────────────────────────────────────
-const ROLES = [
-  { id:"fe",  emoji:"🖥️",  title:"Frontend Dev",         color:"#4F8EF7", goals:[
-    {id:"fe1",cat:"Code Quality",   goal:"Achieve ≥85% code review approval rate on first submission",        metric:"% approvals",        target:"85%",         tl:"Quarterly",  type:"Performance"},
-    {id:"fe2",cat:"Performance",    goal:"Reduce average page load time to under 2 seconds on key pages",     metric:"Load time",          target:"<2s",         tl:"H1",         type:"Performance"},
-    {id:"fe3",cat:"Delivery",       goal:"Deliver sprint tasks on time with <10% carry-forward rate",         metric:"% on-time",          target:"90%",         tl:"Monthly",    type:"Performance"},
-    {id:"fe4",cat:"Testing",        goal:"Maintain minimum 75% unit test coverage for all new components",    metric:"% coverage",         target:"75%",         tl:"Ongoing",    type:"Quality"},
-    {id:"fe5",cat:"Collaboration",  goal:"Participate in at least 2 knowledge-sharing sessions per quarter",  metric:"Sessions",           target:"2/qtr",       tl:"Quarterly",  type:"Development"},
-    {id:"fe6",cat:"Accessibility",  goal:"Ensure all new UI components meet WCAG 2.1 AA standards",          metric:"Compliance %",       target:"100%",        tl:"Ongoing",    type:"Quality"},
-  ]},
-  { id:"be",  emoji:"⚙️",  title:"Backend Dev",           color:"#22C55E", goals:[
-    {id:"be1",cat:"Reliability",    goal:"Maintain API uptime of 99.9% for all production services",          metric:"Uptime %",           target:"99.9%",       tl:"Ongoing",    type:"Performance"},
-    {id:"be2",cat:"Performance",    goal:"Reduce average API response time by 20% from current baseline",     metric:"Response time",      target:"-20%",        tl:"H1",         type:"Performance"},
-    {id:"be3",cat:"Security",       goal:"Zero critical vulnerabilities unresolved beyond 48-hour SLA",       metric:"CVEs >48hr",         target:"0",           tl:"Ongoing",    type:"Quality"},
-    {id:"be4",cat:"Code Quality",   goal:"Achieve ≥80% code review first-pass approval rate",                 metric:"% approvals",        target:"80%",         tl:"Quarterly",  type:"Performance"},
-    {id:"be5",cat:"Documentation",  goal:"Ensure all APIs are documented in Swagger/Postman before release",  metric:"% documented",       target:"100%",        tl:"Ongoing",    type:"Quality"},
-    {id:"be6",cat:"Development",    goal:"Complete one backend architecture or cloud certification",           metric:"Certs",              target:"1",           tl:"Annual",     type:"Development"},
-  ]},
-  { id:"fs",  emoji:"🔄",  title:"Fullstack Dev",          color:"#A855F7", goals:[
-    {id:"fs1",cat:"Delivery",       goal:"Own and deliver 3 end-to-end features from design to deployment",   metric:"Features shipped",   target:"3",           tl:"Annual",     type:"Performance"},
-    {id:"fs2",cat:"Code Quality",   goal:"Maintain ≥80% code review approval on both FE and BE submissions",  metric:"% approvals",        target:"80%",         tl:"Quarterly",  type:"Quality"},
-    {id:"fs3",cat:"Performance",    goal:"Full-stack features meet budgets (FE <2s load, BE <200ms API)",      metric:"Both thresholds",    target:"100%",        tl:"Per feature",type:"Quality"},
-    {id:"fs4",cat:"Testing",        goal:"Achieve 70%+ test coverage across all newly written code",           metric:"% coverage",         target:"70%",         tl:"Ongoing",    type:"Quality"},
-    {id:"fs5",cat:"Collaboration",  goal:"Flag cross-stack blockers within 24hr of detection",                 metric:"Avg resolution",     target:"<24hr",       tl:"Ongoing",    type:"Performance"},
-    {id:"fs6",cat:"Growth",         goal:"Mentor at least one junior developer through a full feature cycle",  metric:"Mentees guided",     target:"1",           tl:"Annual",     type:"Development"},
-  ]},
-  { id:"ux",  emoji:"🎨",  title:"UI/UX Designer",         color:"#F97316", goals:[
-    {id:"ux1",cat:"Design System",  goal:"Build component library covering 80% of recurring UI patterns",     metric:"Components",         target:"80%",         tl:"H1",         type:"Performance"},
-    {id:"ux2",cat:"User Research",  goal:"Conduct usability testing for at least 4 major features",           metric:"Research sessions",  target:"4",           tl:"Annual",     type:"Performance"},
-    {id:"ux3",cat:"Delivery",       goal:"Deliver design handoffs at least 1 sprint ahead of dev cycle",      metric:"Lead time",          target:"1 sprint",    tl:"Ongoing",    type:"Quality"},
-    {id:"ux4",cat:"Usability",      goal:"Improve SUS score by 10 points on key user flows",                  metric:"SUS score",          target:"+10 pts",     tl:"Annual",     type:"Impact"},
-    {id:"ux5",cat:"Collaboration",  goal:"Zero design-to-dev rework due to unclear specs or missing assets",  metric:"Rework incidents",   target:"0",           tl:"Ongoing",    type:"Quality"},
-    {id:"ux6",cat:"Growth",         goal:"Present one emerging design trend or tool to the team per quarter", metric:"Presentations",      target:"4/year",      tl:"Quarterly",  type:"Development"},
-  ]},
-  { id:"ec",  emoji:"🛒",  title:"Ecommerce Specialist",   color:"#EAB308", goals:[
-    {id:"ec1",cat:"Conversion",     goal:"Increase website conversion rate by 15% from current baseline",     metric:"CVR %",              target:"+15%",        tl:"Annual",     type:"Impact"},
-    {id:"ec2",cat:"Revenue",        goal:"Grow GMV by 20% year-over-year through platform optimization",      metric:"GMV growth",         target:"+20% YoY",    tl:"Annual",     type:"Impact"},
-    {id:"ec3",cat:"Cart Recovery",  goal:"Reduce cart abandonment rate by 10% through UX & email flows",      metric:"Abandon rate",       target:"-10%",        tl:"H1",         type:"Performance"},
-    {id:"ec4",cat:"Campaigns",      goal:"Plan and execute 12 product campaigns with per-campaign ROI",        metric:"Campaigns",          target:"12/year",     tl:"Monthly",    type:"Performance"},
-    {id:"ec5",cat:"Listings",       goal:"100% of active listings have optimized titles, images, descriptions",metric:"% listings",         target:"100%",        tl:"Q1",         type:"Quality"},
-    {id:"ec6",cat:"Analytics",      goal:"Submit monthly ecommerce performance report with insights",          metric:"Reports",            target:"12/year",     tl:"Monthly",    type:"Performance"},
-  ]},
-  { id:"ps",  emoji:"🖼️",  title:"Photoshop Specialist",   color:"#06B6D4", goals:[
-    {id:"ps1",cat:"Delivery",       goal:"Deliver 95% of creative assets within agreed turnaround time",       metric:"% on-time",          target:"95%",         tl:"Monthly",    type:"Performance"},
-    {id:"ps2",cat:"Quality",        goal:"Achieve <5% revision rate on delivered assets",                      metric:"Revision rate",      target:"<5%",         tl:"Quarterly",  type:"Quality"},
-    {id:"ps3",cat:"Brand",          goal:"Ensure 100% of assets follow brand guidelines without exception",    metric:"Brand compliance",   target:"100%",        tl:"Ongoing",    type:"Quality"},
-    {id:"ps4",cat:"Productivity",   goal:"Build reusable asset library of 50+ templates",                      metric:"Templates",          target:"50+",         tl:"Annual",     type:"Performance"},
-    {id:"ps5",cat:"Volume",         goal:"Deliver minimum agreed assets per month per capacity plan",           metric:"Assets/month",       target:"Per plan",    tl:"Monthly",    type:"Performance"},
-    {id:"ps6",cat:"Growth",         goal:"Learn and apply one new design tool or technique per quarter",        metric:"Skills added",       target:"4/year",      tl:"Quarterly",  type:"Development"},
-  ]},
-  { id:"wd",  emoji:"🌐",  title:"Web Developer",           color:"#10B981", goals:[
-    {id:"wd1",cat:"Performance",    goal:"Achieve Google PageSpeed score of 85+ on all key landing pages",     metric:"PageSpeed",          target:"85+",         tl:"H1",         type:"Quality"},
-    {id:"wd2",cat:"SEO",            goal:"Ensure all pages meet technical SEO standards (meta, schema, map)",  metric:"% compliant",        target:"100%",        tl:"Q1",         type:"Quality"},
-    {id:"wd3",cat:"Uptime",         goal:"Maintain website uptime of 99.5% or higher",                         metric:"Uptime %",           target:"99.5%",       tl:"Ongoing",    type:"Performance"},
-    {id:"wd4",cat:"Bug Resolution", goal:"Resolve all P1/P2 website bugs within 24 hours of reporting",        metric:"Resolution time",    target:"<24hr",       tl:"Ongoing",    type:"Quality"},
-    {id:"wd5",cat:"Delivery",       goal:"Complete web update requests within 2 business days",                 metric:"Turnaround",         target:"<2 days",     tl:"Ongoing",    type:"Performance"},
-    {id:"wd6",cat:"Security",       goal:"Conduct quarterly security audits and resolve all flagged issues",    metric:"Audits done",        target:"4/year",      tl:"Quarterly",  type:"Quality"},
-  ]},
-  { id:"pm",  emoji:"📋",  title:"Assoc. Product Manager", color:"#F43F5E", goals:[
-    {id:"pm1",cat:"Roadmap",        goal:"Maintain a prioritized, clearly documented product backlog always",  metric:"Backlog review",     target:"Weekly",      tl:"Ongoing",    type:"Performance"},
-    {id:"pm2",cat:"Feature Delivery",goal:"Ensure 80% of planned quarterly features are shipped on time",      metric:"% on time",          target:"80%",         tl:"Quarterly",  type:"Performance"},
-    {id:"pm3",cat:"Stakeholders",   goal:"Conduct monthly product reviews with key stakeholders",              metric:"Reviews held",       target:"12/year",     tl:"Monthly",    type:"Performance"},
-    {id:"pm4",cat:"User Research",  goal:"Gather user feedback for every major feature before & after launch", metric:"Features researched",target:"100%",        tl:"Per feature",type:"Quality"},
-    {id:"pm5",cat:"Data",           goal:"Define and track success metrics for all features launched",          metric:"% with KPIs",        target:"100%",        tl:"Ongoing",    type:"Quality"},
-    {id:"pm6",cat:"Growth",         goal:"Complete a PM certification or structured learning program",          metric:"Certs",              target:"1",           tl:"Annual",     type:"Development"},
-  ]},
-  { id:"hb",  emoji:"🤝",  title:"HRBP",                   color:"#8B5CF6", goals:[
-    {id:"hb1",cat:"Retention",      goal:"Reduce voluntary attrition in assigned business units by 10%",       metric:"Attrition %",        target:"-10%",        tl:"Annual",     type:"Impact"},
-    {id:"hb2",cat:"Engagement",     goal:"Achieve employee engagement score of 75%+ in pulse surveys",         metric:"Engagement score",   target:"75%+",        tl:"Bi-annual",  type:"Impact"},
-    {id:"hb3",cat:"PMS",            goal:"Ensure 100% completion of goal-setting & mid-year reviews",          metric:"% completion",       target:"100%",        tl:"Per cycle",  type:"Performance"},
-    {id:"hb4",cat:"Grievance",      goal:"Resolve all employee grievances within 10 working days",              metric:"Resolution time",    target:"<10 days",    tl:"Ongoing",    type:"Quality"},
-    {id:"hb5",cat:"L&D",            goal:"Roll out 2 targeted training interventions per BU",                   metric:"Interventions",      target:"2/BU",        tl:"Annual",     type:"Performance"},
-    {id:"hb6",cat:"Partnership",    goal:"Conduct structured check-ins with BU heads monthly",                  metric:"Check-ins",          target:"12/year",     tl:"Monthly",    type:"Performance"},
-  ]},
-  { id:"hr",  emoji:"👥",  title:"Asst. Manager HR",        color:"#EC4899", goals:[
-    {id:"hr1",cat:"Recruitment",    goal:"Achieve average time-to-fill of under 30 days for all open roles",   metric:"Days to fill",       target:"<30 days",    tl:"Ongoing",    type:"Performance"},
-    {id:"hr2",cat:"Onboarding",     goal:"Achieve 90%+ satisfaction score on new hire onboarding feedback",    metric:"Onboarding CSAT",    target:"90%+",        tl:"Per cohort", type:"Quality"},
-    {id:"hr3",cat:"Compliance",     goal:"100% HR compliance with labour laws and internal HR policies",        metric:"Audit pass rate",    target:"100%",        tl:"Annual",     type:"Quality"},
-    {id:"hr4",cat:"Talent Pipeline",goal:"Build a pre-screened talent pipeline for all critical roles",         metric:"Roles covered",      target:"100%",        tl:"Q2",         type:"Performance"},
-    {id:"hr5",cat:"HR Operations",  goal:"Zero payroll or documentation errors in monthly HR processing",       metric:"Errors/cycle",       target:"0",           tl:"Monthly",    type:"Quality"},
-    {id:"hr6",cat:"Employer Brand", goal:"Execute 2 employer branding initiatives (campus, social, events)",    metric:"Initiatives",        target:"2",           tl:"Annual",     type:"Performance"},
-  ]},
-  { id:"mk",  emoji:"📣",  title:"Marketing Manager",       color:"#F59E0B", goals:[
-    {id:"mk1",cat:"Leads",          goal:"Generate qualified MQLs per quarter aligned to sales targets",        metric:"MQLs",               target:"Per target",  tl:"Quarterly",  type:"Impact"},
-    {id:"mk2",cat:"Brand Awareness",goal:"Grow organic social media reach by 25% across primary channels",     metric:"Reach growth",       target:"+25%",        tl:"Annual",     type:"Impact"},
-    {id:"mk3",cat:"Campaign ROI",   goal:"Achieve minimum 3x ROI on all paid marketing campaigns",              metric:"Campaign ROI",       target:"3x",          tl:"Per campaign",type:"Performance"},
-    {id:"mk4",cat:"Content",        goal:"Publish minimum 8 high-quality content pieces per month",             metric:"Pieces/month",       target:"8+",          tl:"Monthly",    type:"Performance"},
-    {id:"mk5",cat:"Email",          goal:"Maintain email open rate >25% and click-through rate >3%",            metric:"Open/CTR",           target:">25%/>3%",    tl:"Ongoing",    type:"Quality"},
-    {id:"mk6",cat:"Analytics",      goal:"Submit monthly marketing performance dashboard with channel ROI",      metric:"Reports",            target:"12/year",     tl:"Monthly",    type:"Performance"},
-  ]},
-];
-
-const STATUS_CFG = {
-  "Not Started": { color:"#6B7280", bg:"#F3F4F6", bar:"#D1D5DB", dark_bg:"#1F2937" },
-  "In Progress":  { color:"#2563EB", bg:"#EFF6FF", bar:"#3B82F6", dark_bg:"#1E3A5F" },
-  "On Track":     { color:"#16A34A", bg:"#F0FDF4", bar:"#22C55E", dark_bg:"#14532D" },
-  "At Risk":      { color:"#D97706", bg:"#FFFBEB", bar:"#F59E0B", dark_bg:"#451A03" },
-  "Completed":    { color:"#7C3AED", bg:"#FAF5FF", bar:"#A855F7", dark_bg:"#3B0764" },
-};
-const TYPE_CFG = {
-  Performance: { bg:"#EFF6FF", text:"#2563EB" },
-  Quality:     { bg:"#F0FDF4", text:"#16A34A" },
-  Impact:      { bg:"#FFF7ED", text:"#C2410C" },
-  Development: { bg:"#FAF5FF", text:"#7C3AED" },
-};
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const CHECKIN_STATUS = ["On Track","Needs Attention","Blocked"];
-const CHECKIN_COLORS = { "On Track":"#22C55E", "Needs Attention":"#F59E0B", "Blocked":"#EF4444" };
-
-function clarityScore(goal) {
-  let score = 0;
-  if (/\d/.test(goal.target)) score += 25;
-  if (goal.metric && goal.metric.length > 2) score += 25;
-  if (goal.tl && goal.tl.length > 1) score += 25;
-  if (goal.goal.length > 40) score += 25;
-  return score;
+// ─── Employee Data ────────────────────────────────────────────────────────────
+function getTemplate(designation, department) {
+  const d = (designation || "").toLowerCase();
+  const dept = (department || "").toLowerCase();
+  if (d.includes("intern")) return GOAL_TEMPLATES.intern;
+  if (d.includes("head of e-commerce") || d.includes("head of ecommerce")) return GOAL_TEMPLATES.ecom_head;
+  if (d.includes("shopify developer") || d.includes("shopify")) return GOAL_TEMPLATES.shopify;
+  if (d.includes("lead web") || d.includes("lead web developer")) return GOAL_TEMPLATES.webdev;
+  if (d.includes("web developer") || d.includes("web dev")) return GOAL_TEMPLATES.webdev;
+  if (d.includes("web analyst")) return GOAL_TEMPLATES.web_analyst;
+  if (d.includes("front-end") || d.includes("frontend") || d.includes("junior developer")) return GOAL_TEMPLATES.frontend;
+  if (d.includes("full stack") || d.includes("fullstack")) return GOAL_TEMPLATES.fullstack;
+  if (d.includes("quality analyst") || d.includes("quality assurance") || d.includes("qa")) return GOAL_TEMPLATES.qa;
+  if (d.includes("senior product manager")) return GOAL_TEMPLATES.pm;
+  if (d.includes("associate product manager")) return GOAL_TEMPLATES.apm;
+  if (d.includes("associate site ops") || d.includes("site ops")) return GOAL_TEMPLATES.ops_manager;
+  if (d.includes("data analyst")) return GOAL_TEMPLATES.data_analyst;
+  if (d.includes("photoshop")) return GOAL_TEMPLATES.design;
+  if (d.includes("ui/ux") || d.includes("ux designer") || d.includes("ux intern")) return GOAL_TEMPLATES.uiux;
+  if (d.includes("assistant manager - growth") || d.includes("growth marketing")) return GOAL_TEMPLATES.marketing;
+  if (d.includes("marketing manager - crm") || d.includes("crm and analytics") || d.includes("crm")) return GOAL_TEMPLATES.crm;
+  if (d.includes("marketing manager") || d.includes("marketing")) return GOAL_TEMPLATES.marketing;
+  if (d.includes("human resource business partner") || d.includes("hrbp")) return GOAL_TEMPLATES.hrbp;
+  if (d.includes("assistant manager hr") || d.includes("hr")) return GOAL_TEMPLATES.hr_manager;
+  if (dept.includes("ecommerce") || dept.includes("e-commerce")) return GOAL_TEMPLATES.ecom_ops;
+  if (dept.includes("design")) return GOAL_TEMPLATES.design_lead;
+  return GOAL_TEMPLATES.ecom_ops;
 }
 
-function sentimentTag(text) {
-  const t = text.toLowerCase();
-  if (/(block|stuck|issue|problem|fail|miss|behind|risk|delay|cannot|can't)/i.test(t)) return { label:"⚠️ Concern", color:"#D97706" };
-  if (/(complet|done|achiev|success|great|excellent|ahead|on track)/i.test(t)) return { label:"✅ Positive", color:"#16A34A" };
-  return { label:"💬 Neutral", color:"#6B7280" };
+const RAW_EMPLOYEES = [
+  { id:"CT00011", name:"Apratim Mahata",                  designation:"Junior Developer",                        dept:"Technology Team",  manager:"Vedang Singh"         },
+  { id:"CT00012", name:"Soumya Kanta Mohanty",            designation:"Head of E-commerce Operations",           dept:"Ecommerce",         manager:"Vedang Singh"         },
+  { id:"CT00013", name:"Shubham Pandey",                  designation:"Junior Software Developer - Full Stack",  dept:"Technology Team",  manager:"Vedang Singh"         },
+  { id:"CT00014", name:"Alok Kumar Choudhary",            designation:"Ecommerce Executive",                     dept:"Ecommerce",         manager:"Soumya Kanta Mohanty" },
+  { id:"CT00015", name:"Hrithik Singh",                   designation:"Associate Product Manager",               dept:"Site Operations",  manager:"Vedang Singh"         },
+  { id:"CT00019", name:"Vadde Thirumalesh",               designation:"Quality Analyst",                         dept:"Technology Team",  manager:"Suhita Paik"          },
+  { id:"CT00020", name:"Rahul Bhatt",                     designation:"Associate Product Manager",               dept:"Site Operations",  manager:"Parveen Jahan"        },
+  { id:"CT00021", name:"Supraja Ramkumar",                designation:"Ecommerce Executive",                     dept:"Ecommerce",         manager:"Soumya Kanta Mohanty" },
+  { id:"CT00023", name:"Soumesh Kundu",                   designation:"Full Stack Intern",                       dept:"Technology Team",  manager:"Apratim Mahata"       },
+  { id:"CT00025", name:"Mohammad Arif Uzair",             designation:"Senior Shopify Developer",                dept:"Ecommerce",         manager:"Suman Saha"           },
+  { id:"CT00026", name:"Mohan Nandanawad",                designation:"Web Analyst",                             dept:"Site Operations",  manager:"Vedang Singh"         },
+  { id:"CT00027", name:"Parthapratim Dash",               designation:"Associate Site Ops Manager",              dept:"Ecommerce",         manager:"Soumya Kanta Mohanty" },
+  { id:"CT00028", name:"Sushil Kumar",                    designation:"Senior Shopify Developer",                dept:"Site Operations",  manager:"Suman Saha"           },
+  { id:"CT00030", name:"Ronit Shrestha",                  designation:"Shopify Developer",                       dept:"Ecommerce",         manager:"Suman Saha"           },
+  { id:"CT00031", name:"Muskan Mondal",                   designation:"Photoshop Specialist",                    dept:"Design Team",      manager:"Soumya Kanta Mohanty" },
+  { id:"CT00032", name:"Syeda Rahmat",                    designation:"Junior UI/UX Designer",                   dept:"Design Team",      manager:"Madhushree BJ"        },
+  { id:"CT00034", name:"Aditya Sharma",                   designation:"Data Analyst Intern",                     dept:"Site Operations",  manager:"Hrithik Singh"        },
+  { id:"CT00035", name:"Suhita Paik",                     designation:"Senior Product Manager",                  dept:"Site Operations",  manager:"Parveen Jahan"        },
+  { id:"CT00036", name:"Deepak Kumar",                    designation:"Shopify Developer",                       dept:"Ecommerce",         manager:"Suman Saha"           },
+  { id:"CT00037", name:"Swastik Sharma",                  designation:"Full Stack Intern",                       dept:"Technology Team",  manager:"Apratim Mahata"       },
+  { id:"CT00038", name:"Ashvin Tyagi",                    designation:"Assistant Manager - Growth Marketing",    dept:"Marketing",        manager:"Parveen Jahan"        },
+  { id:"CT0004",  name:"Madhushree BJ",                   designation:"Design Lead",                             dept:"Design Team",      manager:"Vedang Singh"         },
+  { id:"CT00041", name:"Vibudh Rathore",                  designation:"Junior Developer",                        dept:"Technology Team",  manager:"Shubham Pandey"       },
+  { id:"CT00043", name:"Shreyansh Srivastava",            designation:"Full Stack Intern",                       dept:"Technology Team",  manager:"Apratim Mahata"       },
+  { id:"CT00045", name:"Bhoopendra Singh",                designation:"Senior Shopify Developer",                dept:"Design Team",      manager:"Suman Saha"           },
+  { id:"CT00046", name:"Manikanteswara Reddy Yandapalle", designation:"Quality Assurance Engineer",              dept:"Technology Team",  manager:"Suhita Paik"          },
+  { id:"CT00048", name:"Paras Bagri",                     designation:"Junior Front-End Developer",              dept:"Technology Team",  manager:"Suman Saha"           },
+  { id:"CT00049", name:"Tilak Rathoure",                  designation:"Full Stack Intern",                       dept:"Technology Team",  manager:"Apratim Mahata"       },
+  { id:"CT00050", name:"Chandan Kumawat",                 designation:"Shopify Developer",                       dept:"Design Team",      manager:"Suman Saha"           },
+  { id:"CT00051", name:"Pervez Ilyasi",                   designation:"Full-Stack Developer",                    dept:"Technology Team",  manager:"Vedang Singh"         },
+  { id:"CT00053", name:"Shaique Hossain",                 designation:"Assistant Manager CRM and Analytics",     dept:"Marketing",        manager:"Manav Goel"           },
+  { id:"CT00054", name:"Prajwal Nitnaware",               designation:"UI/UX Intern",                            dept:"Design Team",      manager:"Madhushree BJ"        },
+  { id:"CT00056", name:"Rshmi Singh",                     designation:"Human Resource Business Partner",         dept:"Human Resource",   manager:"Parveen Jahan"        },
+  { id:"CT00057", name:"Soumojit Dutta",                  designation:"Junior Developer",                        dept:"Technology Team",  manager:"Pervez Ilyasi"        },
+  { id:"CT00058", name:"Manas Srivastava",                designation:"Associate Product Manager",               dept:"Site Operations",  manager:"Vedang Singh"         },
+  { id:"CT0006",  name:"Manav Goel",                      designation:"Marketing Manager - CRM",                 dept:"Marketing",        manager:"Parveen Jahan"        },
+  { id:"CT0007",  name:"Suman Saha",                      designation:"Lead Web Developer",                      dept:"Technology Team",  manager:"Parveen Jahan"        },
+  { id:"CT0009",  name:"Khushi Ash",                      designation:"Assistant Manager HR",                    dept:"Human Resource",   manager:"Parveen Jahan"        },
+];
+
+const EMPLOYEES = RAW_EMPLOYEES.map(e => ({
+  ...e,
+  goals: getTemplate(e.designation, e.dept).map((g, i) => ({ ...g, id: `${e.id}_g${i}` }))
+}));
+
+const DEPT_COLORS = {
+  "Technology Team": "#4F8EF7",
+  "Ecommerce":       "#EAB308",
+  "Site Operations": "#10B981",
+  "Design Team":     "#F97316",
+  "Marketing":       "#A855F7",
+  "Human Resource":  "#EC4899",
+};
+
+const DEPTS = ["All", ...Object.keys(DEPT_COLORS)];
+
+const RATING_LABELS = { 1:"Needs Improvement", 2:"Below Expectations", 3:"Meets Expectations", 4:"Exceeds Expectations", 5:"Outstanding" };
+const RATING_COLORS = { 1:"#EF4444", 2:"#F97316", 3:"#EAB308", 4:"#22C55E", 5:"#6366F1" };
+
+const STATUS_CFG = {
+  "Not Started": { color:"#6B7280", bar:"#D1D5DB" },
+  "In Progress":  { color:"#2563EB", bar:"#3B82F6" },
+  "On Track":     { color:"#16A34A", bar:"#22C55E" },
+  "At Risk":      { color:"#D97706", bar:"#F59E0B" },
+  "Completed":    { color:"#7C3AED", bar:"#A855F7" },
+};
+
+function initGoalData(goals) {
+  const obj = {};
+  goals.forEach(g => {
+    obj[g.id] = { status:"Not Started", progress:0, midRating:0, finalRating:0, midComment:"", finalComment:"" };
+  });
+  return obj;
 }
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function PMS() {
   const [dark, setDark]             = useState(false);
-  const [tab, setTab]               = useState("dashboard");
-  const [role, setRole]             = useState("fe");
-  const [expanded, setExpanded]     = useState(null);
-  const [sidebarOpen, setSidebar]   = useState(true);
-  const [goalData, setGoalData]     = useState({});
-  const [midYearOpen, setMidYear]   = useState(false);
-  const [editingGoal, setEditGoal]  = useState(null);
-  const [editText, setEditText]     = useState("");
-  const [aiLoading, setAiLoading]   = useState({});
-  const [notifications, setNotifs]  = useState([
-    { id:1, msg:"3 goals haven't been updated in 30+ days", type:"warn" },
-    { id:2, msg:"May check-in is due for Frontend Dev team", type:"info" },
-    { id:3, msg:"2 goals are marked At Risk — review needed", type:"danger" },
-  ]);
+  const [search, setSearch]         = useState("");
+  const [deptFilter, setDeptFilter] = useState("All");
+  const [selected, setSelected]     = useState(EMPLOYEES[0]);
+  const [allGoalData, setAllGoalData] = useState(() => {
+    const init = {};
+    EMPLOYEES.forEach(e => { init[e.id] = initGoalData(e.goals); });
+    return init;
+  });
+  const [ratingMode, setRatingMode] = useState(null); // "mid" | "final" | null
 
-  const c = dark ? T.dark : T.light;
-  const currentRole = ROLES.find(r => r.id === role);
+  const bg     = dark ? "#0F1117" : "#F7F7F5";
+  const surf   = dark ? "#1A1D27" : "#FFFFFF";
+  const border = dark ? "#2A2D3A" : "#E8E6DF";
+  const txt    = dark ? "#EEEEF0" : "#1A1A1A";
+  const muted  = dark ? "#8B8FA8" : "#6B7280";
+  const sidebar= dark ? "#13151E" : "#F0EFE9";
+  const hover  = dark ? "#1F2235" : "#F0EFE9";
+  const inp    = dark ? "#1F2235" : "#FFFFFF";
+  const deptColor = DEPT_COLORS[selected?.dept] || "#6B7280";
 
-  const getGD = (id) => goalData[id] || {
-    status:"Not Started", progress:0,
-    selfRating:0, managerRating:0,
-    acknowledged:false,
-    evidence:[],
-    comments:[], newComment:"", newAuthor:"",
-    peerInputs:[], newPeer:"", newPeerComment:"",
-    checkins:{},
-    carryForward:false,
-    aiSuggestion:"", aiLoading:false,
-    midYearEdit:"",
-  };
+  const getGD  = (empId, goalId) => allGoalData[empId]?.[goalId] || { status:"Not Started", progress:0, midRating:0, finalRating:0, midComment:"", finalComment:"" };
+  const setGD  = (empId, goalId, updates) =>
+    setAllGoalData(p => ({ ...p, [empId]: { ...p[empId], [goalId]: { ...getGD(empId, goalId), ...updates } } }));
 
-  const setGD = (id, updates) =>
-    setGoalData(p => ({ ...p, [id]: { ...getGD(id), ...updates } }));
-
-  const addComment = (gid) => {
-    const d = getGD(gid);
-    if (!d.newComment.trim()) return;
-    setGD(gid, {
-      comments:[...d.comments, { text:d.newComment.trim(), author:d.newAuthor.trim()||"Anonymous", date:new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) }],
-      newComment:"", newAuthor:""
-    });
-  };
-
-  const addPeer = (gid) => {
-    const d = getGD(gid);
-    if (!d.newPeerComment.trim()) return;
-    setGD(gid, {
-      peerInputs:[...d.peerInputs, { name:d.newPeer.trim()||"Peer", comment:d.newPeerComment.trim() }],
-      newPeer:"", newPeerComment:""
-    });
-  };
-
-  const checkAI = async (goal) => {
-    setAiLoading(p => ({ ...p, [goal.id]:true }));
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({
-          model:"claude-sonnet-4-20250514",
-          max_tokens:300,
-          messages:[{ role:"user", content:`You are a performance management expert. Review this employee goal and give 2-3 short, specific improvement suggestions to make it more SMART (measurable, time-bound, achievable). Be concise.\n\nGoal: "${goal.goal}"\nCurrent metric: ${goal.metric}\nTarget: ${goal.target}\nTimeline: ${goal.tl}\n\nRespond in plain text, no markdown, max 3 bullet points starting with •` }]
-        })
-      });
-      const data = await res.json();
-      const text = data.content?.find(b => b.type==="text")?.text || "No suggestion available.";
-      setGD(goal.id, { aiSuggestion: text });
-    } catch(e) {
-      setGD(goal.id, { aiSuggestion:"AI unavailable. Check your connection." });
-    }
-    setAiLoading(p => ({ ...p, [goal.id]:false }));
-  };
-
-  const suggestGoals = async (roleObj) => {
-    setAiLoading(p => ({ ...p, [`role_${roleObj.id}`]:true }));
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({
-          model:"claude-sonnet-4-20250514",
-          max_tokens:400,
-          messages:[{ role:"user", content:`Suggest 3 additional SMART performance goals for a ${roleObj.title} in a tech company for 2025. Each goal should be specific, measurable, and realistic. Format: "• [Category]: [Goal] | Target: [metric]". Plain text only, no markdown.` }]
-        })
-      });
-      const data = await res.json();
-      const text = data.content?.find(b => b.type==="text")?.text || "";
-      setGD(`ai_role_${roleObj.id}`, { aiSuggestion: text });
-    } catch(e) {
-      setGD(`ai_role_${roleObj.id}`, { aiSuggestion:"AI unavailable." });
-    }
-    setAiLoading(p => ({ ...p, [`role_${roleObj.id}`]:false }));
-  };
-
-  // ── Dashboard stats ──
-  const allGoals = ROLES.flatMap(r => r.goals);
-  const totalGoals = allGoals.length;
-  const completed  = allGoals.filter(g => getGD(g.id).status === "Completed").length;
-  const atRisk     = allGoals.filter(g => getGD(g.id).status === "At Risk").length;
-  const pending    = allGoals.filter(g => !getGD(g.id).acknowledged).length;
-  const avgProgress = Math.round(allGoals.reduce((s,g) => s+getGD(g.id).progress,0) / totalGoals);
-
-  const inp = (style={}) => ({
-    padding:"7px 10px", borderRadius:6,
-    border:`1px solid ${c.inputBorder}`,
-    background:c.input, color:c.text,
-    fontSize:12, fontFamily:"Georgia,serif",
-    outline:"none", width:"100%", boxSizing:"border-box",
-    ...style
+  const filteredEmps = EMPLOYEES.filter(e => {
+    const matchDept = deptFilter === "All" || e.dept === deptFilter;
+    const matchSearch = e.name.toLowerCase().includes(search.toLowerCase()) ||
+                        e.designation.toLowerCase().includes(search.toLowerCase());
+    return matchDept && matchSearch;
   });
 
-  const btn = (bg, style={}) => ({
-    background:bg, color:"#fff", border:"none",
-    borderRadius:6, padding:"7px 16px",
-    fontSize:12, fontWeight:600, cursor:"pointer",
-    fontFamily:"Georgia,serif", ...style
-  });
+  const empGoals   = selected?.goals || [];
+  const empGDAll   = empGoals.map(g => getGD(selected.id, g.id));
+  const avgProgress = empGoals.length ? Math.round(empGDAll.reduce((s,d) => s+d.progress, 0) / empGoals.length) : 0;
+  const completedCount = empGDAll.filter(d => d.status === "Completed").length;
 
-  // ── Layout ──
+  const inp_style = { padding:"8px 10px", borderRadius:6, border:`1px solid ${border}`, background:inp, color:txt, fontSize:12, fontFamily:"Georgia,serif", outline:"none", width:"100%", boxSizing:"border-box" };
+
+  const RatingStars = ({ value, onChange, color }) => (
+    <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
+      {[1,2,3,4,5].map(n => (
+        <button key={n} onClick={() => onChange(n)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:22, opacity: n <= value ? 1 : 0.2, transition:"opacity 0.15s", filter: n <= value ? "none" : "grayscale(1)" }}>⭐</button>
+      ))}
+      {value > 0 && <span style={{ alignSelf:"center", fontSize:11, fontWeight:700, color: RATING_COLORS[value], marginLeft:4 }}>{RATING_LABELS[value]}</span>}
+    </div>
+  );
+
   return (
-    <div style={{ fontFamily:"Georgia,serif", background:c.bg, minHeight:"100vh", display:"flex", flexDirection:"column", color:c.text }}>
+    <div style={{ fontFamily:"Georgia,serif", background:bg, minHeight:"100vh", display:"flex", flexDirection:"column", color:txt }}>
 
-      {/* Top Nav */}
-      <div style={{ background:c.navBg, borderBottom:`1px solid ${c.border}`, padding:"0 24px", display:"flex", alignItems:"center", gap:0, height:52, flexShrink:0, boxShadow:c.cardShadow }}>
-        <span style={{ fontWeight:700, fontSize:15, marginRight:32, whiteSpace:"nowrap" }}>🎯 PMS 2025</span>
-        {[["dashboard","📊 Dashboard"],["goals","🎯 Goals"],["checkins","📅 Check-ins"]].map(([t,label]) => (
-          <button key={t} onClick={() => setTab(t)} style={{
-            background:"none", border:"none", cursor:"pointer", padding:"0 16px",
-            height:52, fontSize:13, fontWeight:tab===t?700:400,
-            color:tab===t?c.text:c.muted, fontFamily:"Georgia,serif",
-            borderBottom:tab===t?`2px solid ${c.text}`:"2px solid transparent",
-          }}>{label}</button>
-        ))}
+      {/* ── Top Nav ── */}
+      <div style={{ background:surf, borderBottom:`1px solid ${border}`, padding:"0 20px", display:"flex", alignItems:"center", height:50, gap:12, flexShrink:0 }}>
+        <span style={{ fontWeight:800, fontSize:15 }}>🎯 CraftedThread PMS</span>
+        <span style={{ background:dark?"#1F2235":"#EFF6FF", color:"#2563EB", padding:"2px 10px", borderRadius:20, fontSize:11, fontWeight:600 }}>Apr 2026 – Mar 2027</span>
         <div style={{ flex:1 }} />
-        {/* Notification bell */}
-        <div style={{ position:"relative", marginRight:16 }}>
-          <span style={{ fontSize:20, cursor:"pointer" }}>🔔</span>
-          {notifications.length > 0 && (
-            <span style={{ position:"absolute", top:-4, right:-4, background:"#EF4444", color:"#fff", borderRadius:"50%", width:16, height:16, fontSize:10, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700 }}>
-              {notifications.length}
-            </span>
-          )}
-        </div>
-        <button onClick={() => setDark(!dark)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, padding:"4px 8px", borderRadius:6, color:c.muted }}>
+        <span style={{ fontSize:11, color:muted }}>{EMPLOYEES.length} employees</span>
+        <button onClick={() => setDark(!dark)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, padding:4, color:muted }}>
           {dark ? "☀️" : "🌙"}
         </button>
       </div>
 
-      {/* Notification banners */}
-      {notifications.length > 0 && tab === "dashboard" && (
-        <div style={{ background:dark?"#1A1D27":"#FEFCE8", borderBottom:`1px solid ${c.border}`, padding:"6px 24px", display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
-          {notifications.map(n => (
-            <div key={n.id} style={{ display:"flex", alignItems:"center", gap:6, background:n.type==="danger"?"#FEF2F2":n.type==="warn"?"#FFFBEB":"#EFF6FF", padding:"4px 12px", borderRadius:20, fontSize:11 }}>
-              <span>{n.type==="danger"?"🔴":n.type==="warn"?"🟡":"🔵"}</span>
-              <span style={{ color:n.type==="danger"?"#DC2626":n.type==="warn"?"#D97706":"#2563EB" }}>{n.msg}</span>
-              <button onClick={() => setNotifs(p => p.filter(x=>x.id!==n.id))} style={{ background:"none",border:"none",cursor:"pointer",color:"#9CA3AF",fontSize:12,padding:0 }}>✕</button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Main Body */}
       <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
 
-        {/* ── SIDEBAR (Goals & Checkins tabs) ── */}
-        {(tab==="goals"||tab==="checkins") && (
-          <div style={{ width:sidebarOpen?220:52, background:c.sidebar, borderRight:`1px solid ${c.border}`, transition:"width 0.25s", overflow:"hidden", flexShrink:0, display:"flex", flexDirection:"column" }}>
-            <div style={{ padding:"14px 8px 8px", display:"flex", alignItems:"center", gap:8 }}>
-              <button onClick={()=>setSidebar(!sidebarOpen)} style={{ background:"none",border:"none",cursor:"pointer",fontSize:16,color:c.muted,flexShrink:0,padding:4 }}>☰</button>
-              {sidebarOpen && <span style={{ fontSize:12,fontWeight:700,color:c.text,whiteSpace:"nowrap" }}>Roles</span>}
-            </div>
-            <div style={{ flex:1,overflowY:"auto",padding:"0 6px" }}>
-              {ROLES.map(r => (
-                <button key={r.id} onClick={()=>{setRole(r.id);setExpanded(null);}} style={{
-                  width:"100%", background:role===r.id?c.hover:"transparent",
-                  border:"none",borderRadius:6,padding:sidebarOpen?"7px 8px":"7px 0",
-                  cursor:"pointer",display:"flex",alignItems:"center",gap:7,
-                  textAlign:"left",marginBottom:1,justifyContent:sidebarOpen?"flex-start":"center",
+        {/* ── Left Sidebar: Employee List ── */}
+        <div style={{ width:260, background:sidebar, borderRight:`1px solid ${border}`, display:"flex", flexDirection:"column", flexShrink:0 }}>
+          {/* Search & Filter */}
+          <div style={{ padding:"12px 10px 8px" }}>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Search employee..." style={{ ...inp_style, marginBottom:8 }} />
+            <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
+              {DEPTS.map(d => (
+                <button key={d} onClick={() => setDeptFilter(d)} style={{
+                  padding:"3px 8px", borderRadius:20, fontSize:10, fontWeight:600, cursor:"pointer", border:"none",
+                  background: deptFilter===d ? (DEPT_COLORS[d]||"#374151") : (dark?"#1F2235":"#E8E6DF"),
+                  color: deptFilter===d ? "#fff" : muted,
                 }}>
-                  <span style={{ fontSize:15,flexShrink:0 }}>{r.emoji}</span>
-                  {sidebarOpen && <span style={{ fontSize:12,fontWeight:role===r.id?700:400,color:role===r.id?c.text:c.muted,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>{r.title}</span>}
+                  {d === "All" ? "All" : d.replace(" Team","").replace("Human Resource","HR")}
                 </button>
               ))}
             </div>
           </div>
-        )}
 
-        {/* ── CONTENT ── */}
-        <div style={{ flex:1,overflow:"auto" }}>
-
-          {/* ════════════════ DASHBOARD TAB ════════════════ */}
-          {tab==="dashboard" && (
-            <div style={{ padding:"28px 32px" }}>
-              <h2 style={{ margin:"0 0 4px",fontSize:22,fontWeight:700 }}>Team Performance Overview</h2>
-              <p style={{ margin:"0 0 24px",color:c.muted,fontSize:13 }}>FY 2025 · All roles · Real-time</p>
-
-              {/* KPI cards */}
-              <div style={{ display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:14,marginBottom:28 }}>
-                {[
-                  { label:"Total Goals",    val:totalGoals,     icon:"🎯", color:"#4F8EF7" },
-                  { label:"Completed",       val:completed,      icon:"✅", color:"#22C55E" },
-                  { label:"At Risk",         val:atRisk,         icon:"⚠️", color:"#F59E0B" },
-                  { label:"Avg Progress",    val:`${avgProgress}%`,icon:"📈",color:"#A855F7" },
-                  { label:"Unacknowledged",  val:pending,        icon:"📌", color:"#F43F5E" },
-                ].map(k => (
-                  <div key={k.label} style={{ background:c.surface,border:`1px solid ${c.border}`,borderRadius:10,padding:"16px",boxShadow:c.cardShadow }}>
-                    <div style={{ fontSize:22,marginBottom:6 }}>{k.icon}</div>
-                    <div style={{ fontSize:24,fontWeight:700,color:k.color }}>{k.val}</div>
-                    <div style={{ fontSize:12,color:c.muted,marginTop:2 }}>{k.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Role health cards */}
-              <h3 style={{ margin:"0 0 14px",fontSize:16,fontWeight:700 }}>Role Health Overview</h3>
-              <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:12,marginBottom:28 }}>
-                {ROLES.map(r => {
-                  const rGoals = r.goals;
-                  const rAvg = Math.round(rGoals.reduce((s,g)=>s+getGD(g.id).progress,0)/rGoals.length);
-                  const rRisk = rGoals.filter(g=>getGD(g.id).status==="At Risk").length;
-                  const rDone = rGoals.filter(g=>getGD(g.id).status==="Completed").length;
-                  return (
-                    <div key={r.id} onClick={()=>{setTab("goals");setRole(r.id);}} style={{ background:c.surface,border:`1px solid ${c.border}`,borderRadius:10,padding:16,cursor:"pointer",transition:"box-shadow 0.2s",boxShadow:c.cardShadow }}
-                      onMouseEnter={e=>e.currentTarget.style.boxShadow="0 4px 16px rgba(0,0,0,0.12)"}
-                      onMouseLeave={e=>e.currentTarget.style.boxShadow=c.cardShadow}>
-                      <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:10 }}>
-                        <span style={{ fontSize:18 }}>{r.emoji}</span>
-                        <span style={{ fontSize:13,fontWeight:600,color:c.text }}>{r.title}</span>
-                      </div>
-                      <div style={{ height:5,background:c.tag,borderRadius:99,overflow:"hidden",marginBottom:8 }}>
-                        <div style={{ width:`${rAvg}%`,height:"100%",background:r.color,borderRadius:99,transition:"width 0.4s" }} />
-                      </div>
-                      <div style={{ display:"flex",justifyContent:"space-between",fontSize:11 }}>
-                        <span style={{ color:c.muted }}>{rAvg}% avg progress</span>
-                        <span style={{ color:rRisk>0?"#F59E0B":c.muted }}>{rRisk > 0 ? `⚠️ ${rRisk} at risk` : `✅ ${rDone} done`}</span>
-                      </div>
+          {/* Employee list */}
+          <div style={{ flex:1, overflowY:"auto" }}>
+            {filteredEmps.length === 0 && (
+              <div style={{ padding:20, color:muted, fontSize:12, textAlign:"center" }}>No employees found</div>
+            )}
+            {filteredEmps.map(emp => {
+              const empAvg = emp.goals.length ? Math.round(emp.goals.reduce((s,g) => s + getGD(emp.id, g.id).progress, 0) / emp.goals.length) : 0;
+              const dc = DEPT_COLORS[emp.dept] || "#6B7280";
+              return (
+                <div key={emp.id} onClick={() => setSelected(emp)}
+                  style={{ padding:"10px 12px", cursor:"pointer", borderBottom:`1px solid ${border}`, background:selected?.id===emp.id?hover:"transparent", borderLeft:`3px solid ${selected?.id===emp.id?dc:"transparent"}`, transition:"all 0.15s" }}
+                  onMouseEnter={e => { if (selected?.id!==emp.id) e.currentTarget.style.background=hover; }}
+                  onMouseLeave={e => { if (selected?.id!==emp.id) e.currentTarget.style.background="transparent"; }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                    <div style={{ width:32, height:32, borderRadius:"50%", background:dc, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, flexShrink:0 }}>
+                      {emp.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}
                     </div>
-                  );
-                })}
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:12, fontWeight:600, color:txt, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{emp.name}</div>
+                      <div style={{ fontSize:10, color:muted, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{emp.designation}</div>
+                    </div>
+                    <div style={{ fontSize:11, fontWeight:700, color:dc }}>{empAvg}%</div>
+                  </div>
+                  {/* Mini progress bar */}
+                  <div style={{ height:3, background:dark?"#2A2D3A":"#E8E6DF", borderRadius:99, marginTop:6, overflow:"hidden" }}>
+                    <div style={{ width:`${empAvg}%`, height:"100%", background:dc, borderRadius:99, transition:"width 0.3s" }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Right: Employee Goals ── */}
+        {selected && (
+          <div style={{ flex:1, overflow:"auto" }}>
+            {/* Employee Header */}
+            <div style={{ background:surf, borderBottom:`1px solid ${border}`, padding:"20px 28px" }}>
+              <div style={{ display:"flex", alignItems:"flex-start", gap:14 }}>
+                <div style={{ width:52, height:52, borderRadius:"50%", background:deptColor, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, fontWeight:800, flexShrink:0 }}>
+                  {selected.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}
+                </div>
+                <div style={{ flex:1 }}>
+                  <h2 style={{ margin:0, fontSize:20, fontWeight:800 }}>{selected.name}</h2>
+                  <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginTop:5 }}>
+                    <span style={{ background:dark?"#1F2235":"#F3F4F6", color:muted, padding:"2px 10px", borderRadius:20, fontSize:11 }}>{selected.designation}</span>
+                    <span style={{ background:dark?"#1F2235":DEPT_COLORS[selected.dept]+"20", color:deptColor, padding:"2px 10px", borderRadius:20, fontSize:11, fontWeight:600 }}>{selected.dept}</span>
+                    <span style={{ background:dark?"#1F2235":"#F3F4F6", color:muted, padding:"2px 10px", borderRadius:20, fontSize:11 }}>👤 Reports to: {selected.manager}</span>
+                    <span style={{ background:dark?"#1F2235":"#F3F4F6", color:muted, padding:"2px 10px", borderRadius:20, fontSize:11 }}>🆔 {selected.id}</span>
+                  </div>
+                </div>
+                {/* Quick stats */}
+                <div style={{ display:"flex", gap:12, flexShrink:0 }}>
+                  {[
+                    { label:"Avg Progress", val:`${avgProgress}%`, color:deptColor },
+                    { label:"Goals Done",   val:`${completedCount}/${empGoals.length}`, color:"#22C55E" },
+                  ].map(s => (
+                    <div key={s.label} style={{ textAlign:"center", background:dark?"#1F2235":"#F7F7F5", padding:"8px 14px", borderRadius:8, border:`1px solid ${border}` }}>
+                      <div style={{ fontSize:18, fontWeight:800, color:s.color }}>{s.val}</div>
+                      <div style={{ fontSize:10, color:muted, marginTop:2 }}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* At-risk goals */}
-              {atRisk > 0 && (
-                <>
-                  <h3 style={{ margin:"0 0 14px",fontSize:16,fontWeight:700,color:"#D97706" }}>⚠️ Goals Needing Attention</h3>
-                  <div style={{ background:c.surface,border:`1px solid #FDE68A`,borderRadius:10,overflow:"hidden",marginBottom:28 }}>
-                    {allGoals.filter(g=>getGD(g.id).status==="At Risk").map((g,i) => {
-                      const rr = ROLES.find(r=>r.goals.some(x=>x.id===g.id));
-                      return (
-                        <div key={g.id} style={{ padding:"12px 18px",borderBottom:i<atRisk-1?`1px solid ${c.border}`:"none",display:"flex",alignItems:"center",gap:12 }}>
-                          <span style={{ fontSize:16 }}>{rr?.emoji}</span>
-                          <div style={{ flex:1 }}>
-                            <div style={{ fontSize:12,color:c.muted,marginBottom:2 }}>{rr?.title} · {g.cat}</div>
-                            <div style={{ fontSize:13,color:c.text }}>{g.goal}</div>
-                          </div>
-                          <button onClick={()=>{setTab("goals");setRole(rr.id);setExpanded(g.id);}} style={{ ...btn("#D97706"),padding:"4px 12px",fontSize:11 }}>Review →</button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-
-              {/* Mid-year window notice */}
-              <div style={{ background:dark?"#1E3A5F":"#EFF6FF",border:`1px solid #BFDBFE`,borderRadius:10,padding:18,display:"flex",alignItems:"center",gap:16 }}>
-                <span style={{ fontSize:28 }}>📝</span>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontWeight:700,fontSize:14,color:"#1D4ED8",marginBottom:4 }}>Mid-Year Goal Editing Window — July 1–15</div>
-                  <div style={{ fontSize:12,color:c.muted }}>Employees can revise goals during this window if business direction has changed. Go to any goal and click "Mid-Year Edit".</div>
+              {/* Overall progress bar */}
+              <div style={{ marginTop:14 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:muted, marginBottom:5 }}>
+                  <span>Overall Goal Progress — Apr 2026 to Mar 2027</span>
+                  <span style={{ fontWeight:700, color:deptColor }}>{avgProgress}%</span>
                 </div>
-                <button onClick={()=>{setTab("goals");}} style={{ ...btn("#2563EB"),padding:"6px 14px",fontSize:12,whiteSpace:"nowrap" }}>Go to Goals</button>
+                <div style={{ height:8, background:dark?"#2A2D3A":"#E8E6DF", borderRadius:99, overflow:"hidden" }}>
+                  <div style={{ width:`${avgProgress}%`, height:"100%", background:deptColor, borderRadius:99, transition:"width 0.4s" }} />
+                </div>
+              </div>
+
+              {/* Review cycle banners */}
+              <div style={{ display:"flex", gap:10, marginTop:14, flexWrap:"wrap" }}>
+                <div onClick={() => setRatingMode(ratingMode==="mid"?null:"mid")} style={{ flex:1, background:ratingMode==="mid"?"#EFF6FF":(dark?"#1A1D27":"#F0FDF4"), border:`2px solid ${ratingMode==="mid"?"#3B82F6":"#22C55E"}`, borderRadius:8, padding:"10px 14px", cursor:"pointer", minWidth:200 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"#16A34A", marginBottom:2 }}>📊 Mid-Year Review — October 2026</div>
+                  <div style={{ fontSize:11, color:muted }}>Rate performance at mid-year checkpoint · Click to {ratingMode==="mid"?"close":"open"}</div>
+                </div>
+                <div onClick={() => setRatingMode(ratingMode==="final"?null:"final")} style={{ flex:1, background:ratingMode==="final"?"#EFF6FF":(dark?"#1A1D27":"#FAF5FF"), border:`2px solid ${ratingMode==="final"?"#3B82F6":"#A855F7"}`, borderRadius:8, padding:"10px 14px", cursor:"pointer", minWidth:200 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"#7C3AED", marginBottom:2 }}>🏁 Year-End Review — March 2027</div>
+                  <div style={{ fontSize:11, color:muted }}>Final ratings and annual performance summary · Click to {ratingMode==="final"?"close":"open"}</div>
+                </div>
               </div>
             </div>
-          )}
 
-          {/* ════════════════ GOALS TAB ════════════════ */}
-          {tab==="goals" && (
-            <div>
-              {/* Role header */}
-              <div style={{ padding:"28px 32px 18px",borderBottom:`1px solid ${c.border}` }}>
-                <div style={{ display:"flex",alignItems:"center",gap:12,marginBottom:6 }}>
-                  <span style={{ fontSize:26 }}>{currentRole.emoji}</span>
-                  <h2 style={{ margin:0,fontSize:22,fontWeight:700 }}>{currentRole.title}</h2>
-                  <span style={{ background:dark?c.tag:"#F3F4F6",color:c.muted,padding:"2px 10px",borderRadius:20,fontSize:11 }}>FY 2025</span>
-                </div>
-
-                {/* Status summary pills */}
-                <div style={{ display:"flex",gap:8,flexWrap:"wrap",marginBottom:16 }}>
-                  {Object.entries(STATUS_CFG).map(([s,cfg]) => {
-                    const count = currentRole.goals.filter(g=>getGD(g.id).status===s).length;
-                    return <div key={s} style={{ background:dark?cfg.dark_bg:cfg.bg,color:cfg.color,padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:600 }}>{s}: {count}</div>;
-                  })}
-                </div>
-
-                {/* AI Suggest + Mid-year toggle */}
-                <div style={{ display:"flex",gap:10,flexWrap:"wrap" }}>
-                  <button onClick={()=>suggestGoals(currentRole)} style={{ ...btn("#7C3AED",{display:"flex",alignItems:"center",gap:6,fontSize:12}) }}>
-                    {aiLoading[`role_${currentRole.id}`] ? "⏳ Thinking..." : "🤖 AI Suggest Goals"}
-                  </button>
-                  <button onClick={()=>setMidYear(!midYearOpen)} style={{ ...btn(midYearOpen?"#D97706":"#2563EB",{fontSize:12}) }}>
-                    ✏️ {midYearOpen ? "Close Mid-Year Edit":"Open Mid-Year Edit"}
-                  </button>
-                </div>
-
-                {/* AI suggestions for role */}
-                {getGD(`ai_role_${currentRole.id}`).aiSuggestion && (
-                  <div style={{ marginTop:12,background:dark?"#1A1D27":"#FAF5FF",border:`1px solid #DDD6FE`,borderRadius:8,padding:14 }}>
-                    <div style={{ fontSize:11,fontWeight:700,color:"#7C3AED",marginBottom:6 }}>🤖 AI Suggested Additional Goals</div>
-                    <pre style={{ margin:0,fontSize:12,color:c.text,whiteSpace:"pre-wrap",fontFamily:"Georgia,serif",lineHeight:1.7 }}>
-                      {getGD(`ai_role_${currentRole.id}`).aiSuggestion}
-                    </pre>
-                  </div>
-                )}
+            {/* Goals */}
+            <div style={{ padding:"20px 28px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+                <h3 style={{ margin:0, fontSize:15, fontWeight:700 }}>Performance Goals — FY 2026–27</h3>
+                <span style={{ fontSize:11, color:muted }}>Apr 2026 → Mar 2027 · {empGoals.length} goals</span>
               </div>
 
-              {/* Goal list */}
-              <div style={{ padding:"20px 32px" }}>
-                {currentRole.goals.map((goal) => {
-                  const d = getGD(goal.id);
-                  const sc = STATUS_CFG[d.status];
-                  const tc = TYPE_CFG[goal.type];
-                  const cs = clarityScore(goal);
-                  const isOpen = expanded === goal.id;
+              {empGoals.map((goal, idx) => {
+                const d = getGD(selected.id, goal.id);
+                const sc = STATUS_CFG[d.status];
+                return (
+                  <div key={goal.id} style={{ background:surf, border:`1px solid ${border}`, borderRadius:10, marginBottom:12, overflow:"hidden" }}>
 
-                  return (
-                    <div key={goal.id} style={{ background:c.surface,border:`1px solid ${c.border}`,borderRadius:10,marginBottom:12,overflow:"hidden",boxShadow:isOpen?`0 4px 20px rgba(0,0,0,${dark?0.3:0.08})`:c.cardShadow }}>
-
-                      {/* ── Collapsed row ── */}
-                      <div style={{ padding:"14px 18px",display:"flex",alignItems:"flex-start",gap:14,cursor:"pointer",background:d.acknowledged?c.surface:(dark?"#1A1D27":"#FFFBEB") }}
-                        onClick={()=>setExpanded(isOpen?null:goal.id)}>
-                        <div style={{ marginTop:3,color:c.muted,fontSize:11,flexShrink:0,transition:"transform 0.2s",transform:isOpen?"rotate(90deg)":"rotate(0deg)" }}>▶</div>
-                        <div style={{ flex:1,minWidth:0 }}>
-                          <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:5,flexWrap:"wrap" }}>
-                            <span style={{ fontSize:11,fontWeight:700,color:currentRole.color,textTransform:"uppercase",letterSpacing:"0.04em" }}>{goal.cat}</span>
-                            <span style={{ background:dark?c.tag:tc.bg,color:tc.text,padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:600 }}>{goal.type}</span>
-                            {!d.acknowledged && <span style={{ background:"#FEF3C7",color:"#D97706",padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:600 }}>📌 Unacknowledged</span>}
-                            {d.carryForward && <span style={{ background:"#F0FDF4",color:"#16A34A",padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:600 }}>↩️ Carry Forward</span>}
-                            {d.comments.length>0 && <span style={{ background:c.tag,color:c.muted,padding:"2px 8px",borderRadius:20,fontSize:10 }}>💬 {d.comments.length}</span>}
-                            {d.peerInputs.length>0 && <span style={{ background:c.tag,color:c.muted,padding:"2px 8px",borderRadius:20,fontSize:10 }}>👥 {d.peerInputs.length} peer</span>}
-                            {/* Clarity score */}
-                            <span style={{ background:cs>=75?(dark?"#14532D":"#F0FDF4"):cs>=50?(dark?"#451A03":"#FFFBEB"):(dark?"#1F2937":"#FEF2F2"), color:cs>=75?"#16A34A":cs>=50?"#D97706":"#EF4444", padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:600 }}>
-                              🎯 {cs}% clear
-                            </span>
-                          </div>
-                          <div style={{ fontSize:13,color:c.text,lineHeight:1.55,marginBottom:8 }}>
-                            {midYearOpen && d.midYearEdit ? <span>{d.midYearEdit} <span style={{ fontSize:11,color:"#D97706" }}>(edited)</span></span> : goal.goal}
-                          </div>
-                          {/* Progress bar */}
-                          <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-                            <div style={{ flex:1,height:5,background:dark?"#374151":"#F3F4F6",borderRadius:99,overflow:"hidden" }}>
-                              <div style={{ width:`${d.progress}%`,height:"100%",background:sc.bar,borderRadius:99,transition:"width 0.3s" }} />
-                            </div>
-                            <span style={{ fontSize:11,color:sc.color,fontWeight:700,minWidth:32 }}>{d.progress}%</span>
-                            <span style={{ background:dark?sc.dark_bg:sc.bg,color:sc.color,padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:600 }}>{d.status}</span>
-                          </div>
-                          {/* Rating gap indicator */}
-                          {(d.selfRating>0||d.managerRating>0) && (
-                            <div style={{ marginTop:6,fontSize:11,color:c.muted }}>
-                              Self: <b style={{color:c.text}}>{"⭐".repeat(d.selfRating)||"—"}</b> · Manager: <b style={{color:c.text}}>{"⭐".repeat(d.managerRating)||"—"}</b>
-                              {d.selfRating>0&&d.managerRating>0&&d.selfRating!==d.managerRating && (
-                                <span style={{ marginLeft:8,background:"#FEF2F2",color:"#DC2626",padding:"1px 8px",borderRadius:20,fontWeight:600 }}>⚡ {Math.abs(d.selfRating-d.managerRating)} pt gap</span>
-                              )}
-                            </div>
-                          )}
+                    {/* Goal row */}
+                    <div style={{ padding:"14px 18px" }}>
+                      <div style={{ display:"flex", alignItems:"flex-start", gap:14 }}>
+                        <div style={{ width:28, height:28, borderRadius:"50%", background:deptColor+"20", color:deptColor, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, flexShrink:0, marginTop:1 }}>
+                          {idx+1}
                         </div>
-                        <div style={{ textAlign:"right",flexShrink:0 }}>
-                          <div style={{ fontSize:11,color:c.muted,marginBottom:2 }}>{goal.tl}</div>
-                          <div style={{ fontSize:13,fontWeight:700,fontFamily:"monospace",color:c.text }}>{goal.target}</div>
-                          <div style={{ fontSize:11,color:c.muted,marginTop:2 }}>{goal.metric}</div>
-                        </div>
-                      </div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:5, flexWrap:"wrap" }}>
+                            <span style={{ fontSize:11, fontWeight:700, color:deptColor, textTransform:"uppercase", letterSpacing:"0.04em" }}>{goal.cat}</span>
+                          </div>
+                          <div style={{ fontSize:13, color:txt, lineHeight:1.6, marginBottom:10 }}>{goal.goal}</div>
 
-                      {/* ── Expanded panel ── */}
-                      {isOpen && (
-                        <div style={{ borderTop:`1px solid ${c.border}`,padding:"20px 18px 20px 46px",background:c.sectionBg }} onClick={e=>e.stopPropagation()}>
-                          
-                          {/* Row 1: Status + Progress */}
-                          <div style={{ display:"flex",gap:28,flexWrap:"wrap",marginBottom:20 }}>
-                            <div>
-                              <div style={{ fontSize:11,fontWeight:700,color:c.muted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8,fontFamily:"monospace" }}>Status</div>
-                              <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
-                                {Object.entries(STATUS_CFG).map(([s,cfg]) => (
-                                  <button key={s} onClick={()=>setGD(goal.id,{status:s})} style={{ padding:"5px 12px",borderRadius:20,fontSize:11,fontWeight:600,cursor:"pointer",border:d.status===s?`2px solid ${cfg.color}`:"2px solid transparent",background:d.status===s?(dark?cfg.dark_bg:cfg.bg):(dark?c.tag:"#F3F4F6"),color:d.status===s?cfg.color:c.muted,transition:"all 0.15s" }}>
-                                    {s}
-                                  </button>
-                                ))}
-                              </div>
+                          {/* Progress */}
+                          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                            <div style={{ flex:1, height:6, background:dark?"#2A2D3A":"#F0EFE9", borderRadius:99, overflow:"hidden" }}>
+                              <div style={{ width:`${d.progress}%`, height:"100%", background:sc.bar, borderRadius:99, transition:"width 0.3s" }} />
                             </div>
-                            <div style={{ minWidth:200 }}>
-                              <div style={{ fontSize:11,fontWeight:700,color:c.muted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8,fontFamily:"monospace" }}>Progress — {d.progress}%</div>
-                              <input type="range" min="0" max="100" step="10" value={d.progress} onChange={e=>setGD(goal.id,{progress:Number(e.target.value)})} style={{ width:"100%",accentColor:currentRole.color,cursor:"pointer" }} />
-                              <div style={{ display:"flex",justifyContent:"space-between",fontSize:10,color:c.muted,marginTop:2 }}>
-                                <span>0%</span><span>50%</span><span>100%</span>
-                              </div>
-                            </div>
+                            <span style={{ fontSize:12, fontWeight:700, color:sc.color, minWidth:34 }}>{d.progress}%</span>
                           </div>
 
-                          {/* Row 2: Ratings + Acknowledge */}
-                          <div style={{ display:"flex",gap:28,flexWrap:"wrap",marginBottom:20 }}>
-                            <div>
-                              <div style={{ fontSize:11,fontWeight:700,color:c.muted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8,fontFamily:"monospace" }}>Self Rating</div>
-                              <div style={{ display:"flex",gap:4 }}>
-                                {[1,2,3,4,5].map(n=>(
-                                  <button key={n} onClick={()=>setGD(goal.id,{selfRating:n})} style={{ background:"none",border:"none",cursor:"pointer",fontSize:20,opacity:n<=d.selfRating?1:0.3 }}>⭐</button>
-                                ))}
-                              </div>
-                            </div>
-                            <div>
-                              <div style={{ fontSize:11,fontWeight:700,color:c.muted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8,fontFamily:"monospace" }}>Manager Rating</div>
-                              <div style={{ display:"flex",gap:4 }}>
-                                {[1,2,3,4,5].map(n=>(
-                                  <button key={n} onClick={()=>setGD(goal.id,{managerRating:n})} style={{ background:"none",border:"none",cursor:"pointer",fontSize:20,opacity:n<=d.managerRating?1:0.3 }}>🌟</button>
-                                ))}
-                              </div>
-                            </div>
-                            <div style={{ display:"flex",flexDirection:"column",justifyContent:"center",gap:8 }}>
-                              <button onClick={()=>setGD(goal.id,{acknowledged:!d.acknowledged})} style={{ ...btn(d.acknowledged?"#16A34A":"#6B7280",{fontSize:11,display:"flex",alignItems:"center",gap:6}) }}>
-                                {d.acknowledged ? "✅ Acknowledged" : "📌 Acknowledge Goal"}
-                              </button>
-                              <button onClick={()=>setGD(goal.id,{carryForward:!d.carryForward})} style={{ ...btn(d.carryForward?"#D97706":"#6B7280",{fontSize:11}) }}>
-                                {d.carryForward ? "↩️ Carry Forward: ON" : "↩️ Mark Carry Forward"}
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Mid-year edit */}
-                          {midYearOpen && (
-                            <div style={{ marginBottom:20,background:dark?"#1A1D27":"#FFFBEB",border:`1px solid #FDE68A`,borderRadius:8,padding:14 }}>
-                              <div style={{ fontSize:11,fontWeight:700,color:"#D97706",marginBottom:8,fontFamily:"monospace",textTransform:"uppercase" }}>✏️ Mid-Year Goal Edit</div>
-                              <textarea value={d.midYearEdit||goal.goal} onChange={e=>setGD(goal.id,{midYearEdit:e.target.value})} rows={2}
-                                style={{ ...inp(),resize:"vertical",background:dark?"#1F2235":c.input }} />
-                              <div style={{ fontSize:11,color:c.muted,marginTop:4 }}>Edit the goal text to reflect business changes. Original is preserved for audit.</div>
-                            </div>
-                          )}
-
-                          {/* Evidence */}
-                          <div style={{ marginBottom:20 }}>
-                            <div style={{ fontSize:11,fontWeight:700,color:c.muted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8,fontFamily:"monospace" }}>📎 Evidence / Proof</div>
-                            <div style={{ display:"flex",gap:8,marginBottom:8,flexWrap:"wrap" }}>
-                              {(d.evidence||[]).map((e,i)=>(
-                                <div key={i} style={{ background:dark?c.tag:"#EFF6FF",color:"#2563EB",padding:"4px 10px",borderRadius:6,fontSize:12,display:"flex",alignItems:"center",gap:6 }}>
-                                  📄 {e}
-                                  <button onClick={()=>setGD(goal.id,{evidence:d.evidence.filter((_,j)=>j!==i)})} style={{ background:"none",border:"none",cursor:"pointer",color:"#9CA3AF",fontSize:12,padding:0 }}>✕</button>
-                                </div>
+                          {/* Controls row */}
+                          <div style={{ display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
+                            {/* Status */}
+                            <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
+                              {Object.entries(STATUS_CFG).map(([s,cfg]) => (
+                                <button key={s} onClick={() => setGD(selected.id, goal.id, { status:s })} style={{
+                                  padding:"3px 10px", borderRadius:20, fontSize:10, fontWeight:600, cursor:"pointer",
+                                  border:`1.5px solid ${d.status===s?cfg.color:"transparent"}`,
+                                  background: d.status===s ? (cfg.color+"20") : (dark?"#1F2235":"#F3F4F6"),
+                                  color: d.status===s ? cfg.color : muted,
+                                  transition:"all 0.15s"
+                                }}>{s}</button>
                               ))}
                             </div>
-                            <div style={{ display:"flex",gap:8 }}>
-                              <input id={`ev_${goal.id}`} placeholder="Paste link or filename (e.g. Q1_report.pdf)" style={{ ...inp(),flex:1 }} />
-                              <button onClick={()=>{const v=document.getElementById(`ev_${goal.id}`).value.trim();if(v){setGD(goal.id,{evidence:[...(d.evidence||[]),v]});document.getElementById(`ev_${goal.id}`).value="";}}} style={{ ...btn("#2563EB",{whiteSpace:"nowrap",fontSize:12}) }}>Add</button>
+                            {/* Progress slider */}
+                            <div style={{ display:"flex", alignItems:"center", gap:6, flex:1, minWidth:160 }}>
+                              <span style={{ fontSize:10, color:muted, whiteSpace:"nowrap" }}>Progress:</span>
+                              <input type="range" min="0" max="100" step="10" value={d.progress}
+                                onChange={e => setGD(selected.id, goal.id, { progress:Number(e.target.value) })}
+                                style={{ flex:1, accentColor:deptColor, cursor:"pointer" }} />
                             </div>
                           </div>
-
-                          {/* AI Goal Quality Check */}
-                          <div style={{ marginBottom:20,background:dark?"#1A1D27":"#FAF5FF",border:`1px solid #DDD6FE`,borderRadius:8,padding:14 }}>
-                            <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:d.aiSuggestion?10:0 }}>
-                              <div style={{ flex:1 }}>
-                                <div style={{ fontSize:11,fontWeight:700,color:"#7C3AED",fontFamily:"monospace",textTransform:"uppercase" }}>🤖 AI Goal Quality Check</div>
-                                <div style={{ fontSize:11,color:c.muted,marginTop:2 }}>AI reviews if this goal is SMART and suggests improvements</div>
-                              </div>
-                              <button onClick={()=>checkAI(goal)} style={{ ...btn("#7C3AED",{fontSize:11,whiteSpace:"nowrap"}) }}>
-                                {aiLoading[goal.id] ? "⏳ Checking..." : "Check Goal"}
-                              </button>
-                            </div>
-                            {d.aiSuggestion && (
-                              <pre style={{ margin:0,fontSize:12,color:c.text,whiteSpace:"pre-wrap",fontFamily:"Georgia,serif",lineHeight:1.7,borderTop:`1px solid #DDD6FE`,paddingTop:10,marginTop:0 }}>
-                                {d.aiSuggestion}
-                              </pre>
-                            )}
-                          </div>
-
-                          {/* Peer Input */}
-                          <div style={{ marginBottom:20 }}>
-                            <div style={{ fontSize:11,fontWeight:700,color:c.muted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10,fontFamily:"monospace" }}>👥 Peer Input</div>
-                            {d.peerInputs.map((p,i)=>(
-                              <div key={i} style={{ background:c.surface,border:`1px solid ${c.border}`,borderRadius:8,padding:"10px 12px",marginBottom:8,display:"flex",gap:10,alignItems:"flex-start" }}>
-                                <div style={{ width:28,height:28,borderRadius:"50%",background:"#8B5CF6",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0 }}>
-                                  {p.name.charAt(0).toUpperCase()}
-                                </div>
-                                <div style={{ flex:1 }}>
-                                  <div style={{ fontSize:12,fontWeight:600,color:c.text,marginBottom:3 }}>{p.name}</div>
-                                  <div style={{ fontSize:13,color:c.text,lineHeight:1.5 }}>{p.comment}</div>
-                                </div>
-                              </div>
-                            ))}
-                            <div style={{ background:c.surface,border:`1px solid ${c.border}`,borderRadius:8,padding:12 }}>
-                              <input value={d.newPeer} onChange={e=>setGD(goal.id,{newPeer:e.target.value})} placeholder="Peer's name" style={{ ...inp({marginBottom:8}) }} />
-                              <textarea value={d.newPeerComment} onChange={e=>setGD(goal.id,{newPeerComment:e.target.value})} placeholder="Add peer feedback on this goal..." rows={2} style={{ ...inp({resize:"vertical",marginBottom:8}) }} />
-                              <div style={{ textAlign:"right" }}>
-                                <button onClick={()=>addPeer(goal.id)} style={{ ...btn("#8B5CF6",{fontSize:12}) }}>Add Peer Input</button>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Comments */}
-                          <div>
-                            <div style={{ fontSize:11,fontWeight:700,color:c.muted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10,fontFamily:"monospace" }}>
-                              💬 Manager/Employee Comments {d.comments.length>0&&`(${d.comments.length})`}
-                            </div>
-                            {d.comments.map((cm,i)=>{
-                              const sent = sentimentTag(cm.text);
-                              return (
-                                <div key={i} style={{ background:c.surface,border:`1px solid ${c.border}`,borderRadius:8,padding:"10px 12px",marginBottom:8,display:"flex",gap:10,alignItems:"flex-start" }}>
-                                  <div style={{ width:30,height:30,borderRadius:"50%",background:currentRole.color,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0 }}>
-                                    {cm.author.charAt(0).toUpperCase()}
-                                  </div>
-                                  <div style={{ flex:1 }}>
-                                    <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap" }}>
-                                      <span style={{ fontSize:12,fontWeight:600,color:c.text }}>{cm.author}</span>
-                                      <span style={{ fontSize:11,color:c.muted }}>{cm.date}</span>
-                                      <span style={{ fontSize:10,color:sent.color,fontWeight:600 }}>{sent.label}</span>
-                                    </div>
-                                    <div style={{ fontSize:13,color:c.text,lineHeight:1.5 }}>{cm.text}</div>
-                                  </div>
-                                  <button onClick={()=>setGD(goal.id,{comments:d.comments.filter((_,j)=>j!==i)})} style={{ background:"none",border:"none",cursor:"pointer",color:c.muted,fontSize:14,padding:"2px 4px" }}>✕</button>
-                                </div>
-                              );
-                            })}
-                            <div style={{ background:c.surface,border:`1px solid ${c.border}`,borderRadius:8,padding:12 }}>
-                              <input value={d.newAuthor} onChange={e=>setGD(goal.id,{newAuthor:e.target.value})} placeholder="Your name" style={{ ...inp({marginBottom:8}) }} />
-                              <textarea value={d.newComment} onChange={e=>setGD(goal.id,{newComment:e.target.value})} placeholder="Add a progress update, blocker, or note…" rows={2}
-                                onKeyDown={e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))addComment(goal.id);}}
-                                style={{ ...inp({resize:"vertical",marginBottom:8}) }} />
-                              <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-                                <span style={{ fontSize:11,color:c.muted }}>Ctrl+Enter to post · Sentiment auto-detected</span>
-                                <button onClick={()=>addComment(goal.id)} style={{ ...btn(currentRole.color,{fontSize:12}) }}>Post Comment</button>
-                              </div>
-                            </div>
-                          </div>
-
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
-          {/* ════════════════ CHECK-INS TAB ════════════════ */}
-          {tab==="checkins" && (
-            <div style={{ padding:"28px 32px" }}>
-              <h2 style={{ margin:"0 0 4px",fontSize:22,fontWeight:700 }}>Monthly Check-ins</h2>
-              <p style={{ margin:"0 0 24px",color:c.muted,fontSize:13 }}>{currentRole.emoji} {currentRole.title} · Quick 30-second updates per goal</p>
-
-              {currentRole.goals.map(goal => {
-                const d = getGD(goal.id);
-                const checkins = d.checkins || {};
-                return (
-                  <div key={goal.id} style={{ background:c.surface,border:`1px solid ${c.border}`,borderRadius:10,marginBottom:14,overflow:"hidden",boxShadow:c.cardShadow }}>
-                    <div style={{ padding:"14px 18px",borderBottom:`1px solid ${c.border}` }}>
-                      <div style={{ fontSize:11,color:currentRole.color,fontWeight:700,textTransform:"uppercase",marginBottom:4 }}>{goal.cat}</div>
-                      <div style={{ fontSize:13,color:c.text,lineHeight:1.5 }}>{goal.goal}</div>
-                    </div>
-                    <div style={{ padding:"14px 18px" }}>
-                      <div style={{ fontSize:11,fontWeight:700,color:c.muted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:12,fontFamily:"monospace" }}>Monthly Check-in Status</div>
-                      <div style={{ display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:8 }}>
-                        {MONTHS.map(month => {
-                          const val = checkins[month];
-                          return (
-                            <div key={month} style={{ textAlign:"center" }}>
-                              <div style={{ fontSize:11,color:c.muted,marginBottom:6,fontWeight:600 }}>{month}</div>
-                              <div style={{ display:"flex",flexDirection:"column",gap:3 }}>
-                                {CHECKIN_STATUS.map(s => (
-                                  <button key={s} onClick={()=>setGD(goal.id,{checkins:{...checkins,[month]:val===s?null:s}})}
-                                    style={{ padding:"3px 0",borderRadius:4,border:"none",cursor:"pointer",fontSize:9,fontWeight:600,
-                                      background:val===s?CHECKIN_COLORS[s]:(dark?"#1F2235":"#F3F4F6"),
-                                      color:val===s?"#fff":c.muted,transition:"all 0.15s" }}>
-                                    {s==="On Track"?"✓":s==="Needs Attention"?"!":"✕"}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {/* Target */}
+                        <div style={{ textAlign:"right", flexShrink:0 }}>
+                          <div style={{ fontSize:10, color:muted, marginBottom:2 }}>{goal.metric}</div>
+                          <div style={{ fontSize:14, fontWeight:800, fontFamily:"monospace", color:deptColor }}>{goal.target}</div>
+                        </div>
                       </div>
-                      <div style={{ display:"flex",gap:12,marginTop:12,fontSize:11 }}>
-                        {CHECKIN_STATUS.map(s=>(
-                          <div key={s} style={{ display:"flex",alignItems:"center",gap:4,color:c.muted }}>
-                            <span style={{ width:10,height:10,borderRadius:2,background:CHECKIN_COLORS[s],display:"inline-block" }}></span>
-                            {s}
+                    </div>
+
+                    {/* ── Mid-Year Rating Panel ── */}
+                    {ratingMode === "mid" && (
+                      <div style={{ borderTop:`1px solid ${border}`, padding:"14px 18px", background:dark?"#161820":"#F0FDF4" }}>
+                        <div style={{ fontSize:11, fontWeight:700, color:"#16A34A", marginBottom:10, textTransform:"uppercase", fontFamily:"monospace" }}>📊 Mid-Year Rating — October 2026</div>
+                        <div style={{ marginBottom:10 }}>
+                          <div style={{ fontSize:11, color:muted, marginBottom:6 }}>Manager Rating</div>
+                          <RatingStars value={d.midRating} onChange={v => setGD(selected.id, goal.id, { midRating:v })} color="#16A34A" />
+                        </div>
+                        <textarea value={d.midComment} onChange={e => setGD(selected.id, goal.id, { midComment:e.target.value })}
+                          placeholder="Mid-year feedback, observations, or coaching notes…" rows={2}
+                          style={{ ...inp_style, resize:"vertical" }} />
+                      </div>
+                    )}
+
+                    {/* ── Year-End Rating Panel ── */}
+                    {ratingMode === "final" && (
+                      <div style={{ borderTop:`1px solid ${border}`, padding:"14px 18px", background:dark?"#161820":"#FAF5FF" }}>
+                        <div style={{ fontSize:11, fontWeight:700, color:"#7C3AED", marginBottom:10, textTransform:"uppercase", fontFamily:"monospace" }}>🏁 Year-End Rating — March 2027</div>
+                        <div style={{ marginBottom:10 }}>
+                          <div style={{ fontSize:11, color:muted, marginBottom:6 }}>Final Manager Rating</div>
+                          <RatingStars value={d.finalRating} onChange={v => setGD(selected.id, goal.id, { finalRating:v })} color="#7C3AED" />
+                        </div>
+                        <textarea value={d.finalComment} onChange={e => setGD(selected.id, goal.id, { finalComment:e.target.value })}
+                          placeholder="Year-end feedback, annual performance summary…" rows={2}
+                          style={{ ...inp_style, resize:"vertical" }} />
+                      </div>
+                    )}
+
+                    {/* Show saved ratings summary if both exist */}
+                    {ratingMode === null && (d.midRating > 0 || d.finalRating > 0) && (
+                      <div style={{ borderTop:`1px solid ${border}`, padding:"10px 18px", background:dark?"#161820":"#F9F9F7", display:"flex", gap:20, flexWrap:"wrap" }}>
+                        {d.midRating > 0 && (
+                          <div style={{ fontSize:11 }}>
+                            <span style={{ color:muted }}>Oct 2026: </span>
+                            <span style={{ fontWeight:700, color:RATING_COLORS[d.midRating] }}>{"⭐".repeat(d.midRating)} {RATING_LABELS[d.midRating]}</span>
                           </div>
-                        ))}
+                        )}
+                        {d.finalRating > 0 && (
+                          <div style={{ fontSize:11 }}>
+                            <span style={{ color:muted }}>Mar 2027: </span>
+                            <span style={{ fontWeight:700, color:RATING_COLORS[d.finalRating] }}>{"⭐".repeat(d.finalRating)} {RATING_LABELS[d.finalRating]}</span>
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}
-            </div>
-          )}
 
-        </div>
+              {/* Rating scale legend */}
+              <div style={{ marginTop:16, background:surf, border:`1px solid ${border}`, borderRadius:8, padding:"12px 16px" }}>
+                <div style={{ fontSize:11, fontWeight:700, color:muted, marginBottom:8, textTransform:"uppercase", fontFamily:"monospace" }}>⭐ Rating Scale</div>
+                <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
+                  {Object.entries(RATING_LABELS).map(([n,l]) => (
+                    <div key={n} style={{ display:"flex", alignItems:"center", gap:4, fontSize:11 }}>
+                      <span style={{ fontWeight:700, color:RATING_COLORS[n] }}>{"⭐".repeat(Number(n))}</span>
+                      <span style={{ color:muted }}>{l}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
